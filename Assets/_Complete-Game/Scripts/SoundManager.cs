@@ -3,59 +3,56 @@ using System.Collections;
 
 namespace Completed
 {
-	public class SoundManager : MonoBehaviour 
-	{
-		public AudioSource efxSource;					//Drag a reference to the audio source which will play the sound effects.
-		public AudioSource musicSource;					//Drag a reference to the audio source which will play the music.
-		public static SoundManager instance = null;		//Allows other scripts to call functions from SoundManager.				
-		public float lowPitchRange = .95f;				//The lowest a sound effect will be randomly pitched.
-		public float highPitchRange = 1.05f;			//The highest a sound effect will be randomly pitched.
-		
-		
-		void Awake ()
-		{
-			//Check if there is already an instance of SoundManager
-			if (instance == null)
-				//if not, set it to this.
-				instance = this;
-			//If instance already exists:
-			else if (instance != this)
-				//Destroy this, this enforces our singleton pattern so there can only be one instance of SoundManager.
-				Destroy (gameObject);
-			
-			//Set SoundManager to DontDestroyOnLoad so that it won't be destroyed when reloading our scene.
-			DontDestroyOnLoad (gameObject);
-		}
-		
-		
-		//Used to play single sound clips.
-		public void PlaySingle(AudioClip clip)
-		{
-			//Set the clip of our efxSource audio source to the clip passed in as a parameter.
-			efxSource.clip = clip;
-			
-			//Play the clip.
-			efxSource.Play ();
-		}
-		
-		
-		//RandomizeSfx chooses randomly between various audio clips and slightly changes their pitch.
-		public void RandomizeSfx (params AudioClip[] clips)
-		{
-			//Generate a random number between 0 and the length of our array of clips passed in.
-			int randomIndex = Random.Range(0, clips.Length);
-			
-			//Choose a random pitch to play back our clip at between our high and low pitch ranges.
-			float randomPitch = Random.Range(lowPitchRange, highPitchRange);
-			
-			//Set the pitch of the audio source to the randomly chosen pitch.
-			efxSource.pitch = randomPitch;
-			
-			//Set the clip to the clip at our randomly chosen index.
-			efxSource.clip = clips[randomIndex];
-			
-			//Play the clip.
-			efxSource.Play();
-		}
-	}
+    public class SoundManager : MonoBehaviour
+    {
+        public AudioSource efxSource; // Arrastra una referencia al audio source que reproducirá los efectos de sonido.
+        public AudioSource musicSource; // Arrastra una referencia al audio source que reproducirá la música.
+        public static SoundManager instance = null; // Permite que otros scripts llamen a funciones de SoundManager.
+        public float lowPitchRange = .95f; // El tono más bajo que se reproducirá de un efecto de sonido de forma aleatoria.
+        public float highPitchRange = 1.05f; // El tono más alto que se reproducirá de un efecto de sonido de forma aleatoria.
+
+        void Awake()
+        {
+            // Comprueba si ya existe una instancia de SoundManager
+            if (instance == null)
+                // Si no, establece esta como la instancia.
+                instance = this;
+            // Si ya existe una instancia:
+            else if (instance != this)
+                // Destruye esta, esto impone nuestro patrón singleton para que solo pueda haber una instancia de SoundManager.
+                Destroy(gameObject);
+
+            // Establece SoundManager para que no se destruya al cargar otra escena.
+            DontDestroyOnLoad(gameObject);
+        }
+
+        // Se usa para reproducir clips de sonido individuales.
+        public void PlaySingle(AudioClip clip)
+        {
+            // Establece el clip de nuestro audio source efxSource al clip pasado como parámetro.
+            efxSource.clip = clip;
+
+            // Reproduce el clip.
+            efxSource.Play();
+        }
+
+        // RandomizeSfx elige aleatoriamente entre varios clips de audio y cambia ligeramente su tono.
+        public void RandomizeSfx(params AudioClip[] clips)
+        {
+            // Genera un número aleatorio entre 0 y la longitud de nuestro array de clips pasados.
+            int randomIndex = Random.Range(0, clips.Length);
+
+            // Elige un tono aleatorio para reproducir nuestro clip entre nuestros rangos de tono alto y bajo.
+            float randomPitch = Random.Range(lowPitchRange, highPitchRange);
+
+            // Establece el tono del audio source al tono elegido aleatoriamente.
+            efxSource.pitch = randomPitch;
+
+            // Establece el clip al clip en nuestro índice elegido aleatoriamente.
+            efxSource.clip = clips[randomIndex];
+
+            // Reproduce el clip.
+            efxSource.Play();
+        }
+    }
 }

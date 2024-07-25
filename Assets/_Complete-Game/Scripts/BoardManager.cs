@@ -1,156 +1,156 @@
 ﻿using UnityEngine;
 using System;
-using System.Collections.Generic; 		//Allows us to use Lists.
-using Random = UnityEngine.Random; 		//Tells Random to use the Unity Engine random number generator.
+using System.Collections.Generic; 		//Nos permite usar Listas.
+using Random = UnityEngine.Random; 		//Indica a Random que use el generador de números aleatorios del motor de Unity.
 
 namespace Completed
-	
+
 {
-	
-	public class BoardManager : MonoBehaviour
-	{
-		// Using Serializable allows us to embed a class with sub properties in the inspector.
-		[Serializable]
-		public class Count
-		{
-			public int minimum; 			//Minimum value for our Count class.
-			public int maximum; 			//Maximum value for our Count class.
-			
-			
-			//Assignment constructor.
-			public Count (int min, int max)
-			{
-				minimum = min;
-				maximum = max;
-			}
-		}
-		
-		
-		public int columns = 8; 										//Number of columns in our game board.
-		public int rows = 8;											//Number of rows in our game board.
-		public Count wallCount = new Count (5, 9);						//Lower and upper limit for our random number of walls per level.
-		public Count foodCount = new Count (1, 5);						//Lower and upper limit for our random number of food items per level.
-		public GameObject exit;											//Prefab to spawn for exit.
-		public GameObject[] floorTiles;									//Array of floor prefabs.
-		public GameObject[] wallTiles;									//Array of wall prefabs.
-		public GameObject[] foodTiles;									//Array of food prefabs.
-		public GameObject[] enemyTiles;									//Array of enemy prefabs.
-		public GameObject[] outerWallTiles;								//Array of outer tile prefabs.
-		
-		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
-		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
-		
-		
-		//Clears our list gridPositions and prepares it to generate a new board.
-		void InitialiseList ()
-		{
-			//Clear our list gridPositions.
-			gridPositions.Clear ();
-			
-			//Loop through x axis (columns).
-			for(int x = 1; x < columns-1; x++)
-			{
-				//Within each column, loop through y axis (rows).
-				for(int y = 1; y < rows-1; y++)
-				{
-					//At each index add a new Vector3 to our list with the x and y coordinates of that position.
-					gridPositions.Add (new Vector3(x, y, 0f));
-				}
-			}
-		}
-		
-		
-		//Sets up the outer walls and floor (background) of the game board.
-		void BoardSetup ()
-		{
-			//Instantiate Board and set boardHolder to its transform.
-			boardHolder = new GameObject ("Board").transform;
-			
-			//Loop along x axis, starting from -1 (to fill corner) with floor or outerwall edge tiles.
-			for(int x = -1; x < columns + 1; x++)
-			{
-				//Loop along y axis, starting from -1 to place floor or outerwall tiles.
-				for(int y = -1; y < rows + 1; y++)
-				{
-					//Choose a random tile from our array of floor tile prefabs and prepare to instantiate it.
-					GameObject toInstantiate = floorTiles[Random.Range (0,floorTiles.Length)];
-					
-					//Check if we current position is at board edge, if so choose a random outer wall prefab from our array of outer wall tiles.
-					if(x == -1 || x == columns || y == -1 || y == rows)
-						toInstantiate = outerWallTiles [Random.Range (0, outerWallTiles.Length)];
-					
-					//Instantiate the GameObject instance using the prefab chosen for toInstantiate at the Vector3 corresponding to current grid position in loop, cast it to GameObject.
-					GameObject instance =
-						Instantiate (toInstantiate, new Vector3 (x, y, 0f), Quaternion.identity) as GameObject;
-					
-					//Set the parent of our newly instantiated object instance to boardHolder, this is just organizational to avoid cluttering hierarchy.
-					instance.transform.SetParent (boardHolder);
-				}
-			}
-		}
-		
-		
-		//RandomPosition returns a random position from our list gridPositions.
-		Vector3 RandomPosition ()
-		{
-			//Declare an integer randomIndex, set it's value to a random number between 0 and the count of items in our List gridPositions.
-			int randomIndex = Random.Range (0, gridPositions.Count);
-			
-			//Declare a variable of type Vector3 called randomPosition, set it's value to the entry at randomIndex from our List gridPositions.
-			Vector3 randomPosition = gridPositions[randomIndex];
-			
-			//Remove the entry at randomIndex from the list so that it can't be re-used.
-			gridPositions.RemoveAt (randomIndex);
-			
-			//Return the randomly selected Vector3 position.
-			return randomPosition;
-		}
-		
-		
-		//LayoutObjectAtRandom accepts an array of game objects to choose from along with a minimum and maximum range for the number of objects to create.
-		void LayoutObjectAtRandom (GameObject[] tileArray, int minimum, int maximum)
-		{
-			//Choose a random number of objects to instantiate within the minimum and maximum limits
-			int objectCount = Random.Range (minimum, maximum+1);
-			
-			//Instantiate objects until the randomly chosen limit objectCount is reached
-			for(int i = 0; i < objectCount; i++)
-			{
-				//Choose a position for randomPosition by getting a random position from our list of available Vector3s stored in gridPosition
-				Vector3 randomPosition = RandomPosition();
-				
-				//Choose a random tile from tileArray and assign it to tileChoice
-				GameObject tileChoice = tileArray[Random.Range (0, tileArray.Length)];
-				
-				//Instantiate tileChoice at the position returned by RandomPosition with no change in rotation
-				Instantiate(tileChoice, randomPosition, Quaternion.identity);
-			}
-		}
-		
-		
-		//SetupScene initializes our level and calls the previous functions to lay out the game board
-		public void SetupScene (int level)
-		{
-			//Creates the outer walls and floor.
-			BoardSetup ();
-			
-			//Reset our list of gridpositions.
-			InitialiseList ();
-			
-			//Instantiate a random number of wall tiles based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (wallTiles, wallCount.minimum, wallCount.maximum);
-			
-			//Instantiate a random number of food tiles based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (foodTiles, foodCount.minimum, foodCount.maximum);
-			
-			//Determine number of enemies based on current level number, based on a logarithmic progression
-			int enemyCount = (int)Mathf.Log(level, 2f);
-			
-			//Instantiate a random number of enemies based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount);
-			
-			//Instantiate the exit tile in the upper right hand corner of our game board
-			Instantiate (exit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
-		}
-	}
+
+    public class BoardManager : MonoBehaviour
+    {
+        // Usar Serializable nos permite incrustar una clase con subpropiedades en el inspector.
+        [Serializable]
+        public class Count
+        {
+            public int minimum;             //Valor mínimo para nuestra clase Count.
+            public int maximum;             //Valor máximo para nuestra clase Count.
+
+
+            //Constructor de asignación.
+            public Count(int min, int max)
+            {
+                minimum = min;
+                maximum = max;
+            }
+        }
+
+
+        public int columns = 8;                                         //Número de columnas en nuestro tablero de juego.
+        public int rows = 8;                                            //Número de filas en nuestro tablero de juego.
+        public Count wallCount = new Count(5, 9);                       //Límite inferior y superior para nuestro número aleatorio de muros por nivel.
+        public Count foodCount = new Count(1, 5);                       //Límite inferior y superior para nuestro número aleatorio de alimentos por nivel.
+        public GameObject exit;                                         //Prefab para generar la salida.
+        public GameObject[] floorTiles;                                 //Arreglo de prefabs de suelos.
+        public GameObject[] wallTiles;                                  //Arreglo de prefabs de muros.
+        public GameObject[] foodTiles;                                  //Arreglo de prefabs de alimentos.
+        public GameObject[] enemyTiles;                                 //Arreglo de prefabs de enemigos.
+        public GameObject[] outerWallTiles;                             //Arreglo de prefabs de muros exteriores.
+
+        private Transform boardHolder;                                  //Variable para almacenar una referencia al transform de nuestro objeto Board.
+        private List<Vector3> gridPositions = new List<Vector3>();  //Lista de posibles ubicaciones para colocar las fichas.
+
+
+        //Limpia nuestra lista gridPositions y la prepara para generar un nuevo tablero.
+        void InitialiseList()
+        {
+            //Limpia nuestra lista gridPositions.
+            gridPositions.Clear();
+
+            //Recorre el eje x (columnas).
+            for (int x = 1; x < columns - 1; x++)
+            {
+                //Dentro de cada columna, recorre el eje y (filas).
+                for (int y = 1; y < rows - 1; y++)
+                {
+                    //En cada índice agrega un nuevo Vector3 a nuestra lista con las coordenadas x e y de esa posición.
+                    gridPositions.Add(new Vector3(x, y, 0f));
+                }
+            }
+        }
+
+
+        //Configura los muros exteriores y el suelo (fondo) del tablero de juego.
+        void BoardSetup()
+        {
+            //Instancia el tablero y asigna boardHolder a su transform.
+            boardHolder = new GameObject("Board").transform;
+
+            //Recorre el eje x, comenzando desde -1 (para llenar la esquina) con suelos o fichas de borde de muros exteriores.
+            for (int x = -1; x < columns + 1; x++)
+            {
+                //Recorre el eje y, comenzando desde -1 para colocar fichas de suelos o muros exteriores.
+                for (int y = -1; y < rows + 1; y++)
+                {
+                    //Elige una ficha aleatoria de nuestro arreglo de prefabs de suelos y prepárate para instanciarla.
+                    GameObject toInstantiate = floorTiles[Random.Range(0, floorTiles.Length)];
+
+                    //Verifica si la posición actual está en el borde del tablero, si es así elige un prefab de muro exterior aleatorio de nuestro arreglo de muros exteriores.
+                    if (x == -1 || x == columns || y == -1 || y == rows)
+                        toInstantiate = outerWallTiles[Random.Range(0, outerWallTiles.Length)];
+
+                    //Instancia el GameObject usando el prefab elegido para toInstantiate en el Vector3 correspondiente a la posición de la cuadrícula actual en el bucle, convertida a GameObject.
+                    GameObject instance =
+                        Instantiate(toInstantiate, new Vector3(x, y, 0f), Quaternion.identity) as GameObject;
+
+                    //Asigna el padre de nuestro objeto recién instanciado a boardHolder, esto es solo para organización y evitar desorden en la jerarquía.
+                    instance.transform.SetParent(boardHolder);
+                }
+            }
+        }
+
+
+        //RandomPosition devuelve una posición aleatoria de nuestra lista gridPositions.
+        Vector3 RandomPosition()
+        {
+            //Declara un entero randomIndex, asigna su valor a un número aleatorio entre 0 y el número de elementos en nuestra lista gridPositions.
+            int randomIndex = Random.Range(0, gridPositions.Count);
+
+            //Declara una variable de tipo Vector3 llamada randomPosition, asigna su valor a la entrada en randomIndex de nuestra lista gridPositions.
+            Vector3 randomPosition = gridPositions[randomIndex];
+
+            //Elimina la entrada en randomIndex de la lista para que no pueda volver a usarse.
+            gridPositions.RemoveAt(randomIndex);
+
+            //Devuelve la posición Vector3 seleccionada aleatoriamente.
+            return randomPosition;
+        }
+
+
+        //LayoutObjectAtRandom acepta un arreglo de objetos de juego para elegir junto con un rango mínimo y máximo para el número de objetos a crear.
+        void LayoutObjectAtRandom(GameObject[] tileArray, int minimum, int maximum)
+        {
+            //Elige un número aleatorio de objetos para instanciar dentro de los límites mínimo y máximo.
+            int objectCount = Random.Range(minimum, maximum + 1);
+
+            //Instancia objetos hasta que se alcance el límite elegido aleatoriamente objectCount.
+            for (int i = 0; i < objectCount; i++)
+            {
+                //Elige una posición para randomPosition obteniendo una posición aleatoria de nuestra lista de Vector3 disponibles almacenados en gridPosition.
+                Vector3 randomPosition = RandomPosition();
+
+                //Elige una ficha aleatoria de tileArray y asígnala a tileChoice.
+                GameObject tileChoice = tileArray[Random.Range(0, tileArray.Length)];
+
+                //Instancia tileChoice en la posición devuelta por RandomPosition sin cambiar la rotación.
+                Instantiate(tileChoice, randomPosition, Quaternion.identity);
+            }
+        }
+
+
+        //SetupScene inicializa nuestro nivel y llama a las funciones anteriores para disponer el tablero de juego.
+        public void SetupScene(int level)
+        {
+            //Crea los muros exteriores y el suelo.
+            BoardSetup();
+
+            //Reinicia nuestra lista de posiciones de la cuadrícula.
+            InitialiseList();
+
+            //Instancia un número aleatorio de fichas de muros basado en el mínimo y máximo, en posiciones aleatorias.
+            LayoutObjectAtRandom(wallTiles, wallCount.minimum, wallCount.maximum);
+
+            //Instancia un número aleatorio de fichas de alimentos basado en el mínimo y máximo, en posiciones aleatorias.
+            LayoutObjectAtRandom(foodTiles, foodCount.minimum, foodCount.maximum);
+
+            //Determina el número de enemigos basado en el número de nivel actual, basado en una progresión logarítmica.
+            int enemyCount = (int)Mathf.Log(level, 2f);
+
+            //Instancia un número aleatorio de enemigos basado en el mínimo y máximo, en posiciones aleatorias.
+            LayoutObjectAtRandom(enemyTiles, enemyCount, enemyCount);
+
+            //Instancia la ficha de salida en la esquina superior derecha de nuestro tablero de juego.
+            Instantiate(exit, new Vector3(columns - 1, rows - 1, 0f), Quaternion.identity);
+        }
+    }
 }

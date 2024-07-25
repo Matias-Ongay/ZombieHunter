@@ -4,178 +4,172 @@ using System.Collections;
 
 namespace Completed
 {
-	using System.Collections.Generic;		//Allows us to use Lists. 
-	using UnityEngine.UI;					//Allows us to use UI.
-	
-	public class GameManager : MonoBehaviour
-	{
-		public float levelStartDelay = 2f;						//Time to wait before starting level, in seconds.
-		public float turnDelay = 0.1f;							//Delay between each Player turn.
-		public int playerFoodPoints = 100;						//Starting value for Player food points.
-		public static GameManager instance = null;				//Static instance of GameManager which allows it to be accessed by any other script.
-		[HideInInspector] public bool playersTurn = true;		//Boolean to check if it's players turn, hidden in inspector but public.
-		
-		
-		private Text levelText;									//Text to display current level number.
-		private GameObject levelImage;							//Image to block out level as levels are being set up, background for levelText.
-		private BoardManager boardScript;						//Store a reference to our BoardManager which will set up the level.
-		private int level = 1;									//Current level number, expressed in game as "Day 1".
-		private List<Enemy> enemies;							//List of all Enemy units, used to issue them move commands.
-		private bool enemiesMoving;								//Boolean to check if enemies are moving.
-		private bool doingSetup = true;							//Boolean to check if we're setting up board, prevent Player from moving during setup.
-		
-		
-		
-		//Awake is always called before any Start functions
-		void Awake()
-		{
-            //Check if instance already exists
+    using System.Collections.Generic;       //Nos permite usar Listas.
+    using UnityEngine.UI;                   //Nos permite usar UI.
+
+    public class GameManager : MonoBehaviour
+    {
+        public float levelStartDelay = 2f;                      //Tiempo de espera antes de comenzar el nivel, en segundos.
+        public float turnDelay = 0.1f;                          //Retraso entre cada turno del jugador.
+        public int playerFoodPoints = 100;                      //Valor inicial de los puntos de comida del jugador.
+        public static GameManager instance = null;              //Instancia estática de GameManager que permite que sea accesible por cualquier otro script.
+        [HideInInspector] public bool playersTurn = true;       //Booleano para comprobar si es el turno del jugador, oculto en el inspector pero público.
+
+
+        private Text levelText;                                 //Texto para mostrar el número del nivel actual.
+        private GameObject levelImage;                          //Imagen para bloquear el nivel mientras se configura, fondo para el texto del nivel.
+        private BoardManager boardScript;                       //Almacena una referencia a nuestro BoardManager que configurará el nivel.
+        private int level = 1;                                  //Número del nivel actual, expresado en el juego como "Día 1".
+        private List<Enemy> enemies;                            //Lista de todas las unidades Enemy, utilizada para emitirles comandos de movimiento.
+        private bool enemiesMoving;                             //Booleano para comprobar si los enemigos se están moviendo.
+        private bool doingSetup = true;                         //Booleano para comprobar si estamos configurando el tablero, evita que el jugador se mueva durante la configuración.
+
+
+        //Awake siempre se llama antes de cualquier función Start
+        void Awake()
+        {
+            //Comprueba si la instancia ya existe
             if (instance == null)
-
-                //if not, set instance to this
+                //Si no es así, establece la instancia a esta
                 instance = this;
-
-            //If instance already exists and it's not this:
+            //Si la instancia ya existe y no es esta:
             else if (instance != this)
+                //Entonces destruye esto. Esto refuerza nuestro patrón singleton, lo que significa que solo puede haber una instancia de GameManager.
+                Destroy(gameObject);
 
-                //Then destroy this. This enforces our singleton pattern, meaning there can only ever be one instance of a GameManager.
-                Destroy(gameObject);	
-			
-			//Sets this to not be destroyed when reloading scene
-			DontDestroyOnLoad(gameObject);
-			
-			//Assign enemies to a new List of Enemy objects.
-			enemies = new List<Enemy>();
-			
-			//Get a component reference to the attached BoardManager script
-			boardScript = GetComponent<BoardManager>();
-			
-			//Call the InitGame function to initialize the first level 
-			InitGame();
-		}
+            //Establece esto para que no se destruya al recargar la escena
+            DontDestroyOnLoad(gameObject);
 
-        //this is called only once, and the paramter tell it to be called only after the scene was loaded
-        //(otherwise, our Scene Load callback would be called the very first load, and we don't want that)
+            //Asigna enemigos a una nueva lista de objetos Enemy.
+            enemies = new List<Enemy>();
+
+            //Obtiene una referencia de componente al script BoardManager adjunto
+            boardScript = GetComponent<BoardManager>();
+
+            //Llama a la función InitGame para inicializar el primer nivel 
+            InitGame();
+        }
+
+        //Esto se llama solo una vez, y el parámetro indica que se debe llamar solo después de que se haya cargado la escena
+        //(de lo contrario, nuestro callback de carga de escena se llamaría en la primera carga, y no queremos eso)
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static public void CallbackInitialization()
         {
-            //register the callback to be called everytime the scene is loaded
+            //Registra el callback para que se llame cada vez que se cargue la escena
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        //This is called each time a scene is loaded.
+        //Esto se llama cada vez que se carga una escena.
         static private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
             instance.level++;
             instance.InitGame();
         }
 
-		
-		//Initializes the game for each level.
-		void InitGame()
-		{
-			//While doingSetup is true the player can't move, prevent player from moving while title card is up.
-			doingSetup = true;
-			
-			//Get a reference to our image LevelImage by finding it by name.
-			levelImage = GameObject.Find("LevelImage");
-			
-			//Get a reference to our text LevelText's text component by finding it by name and calling GetComponent.
-			levelText = GameObject.Find("LevelText").GetComponent<Text>();
-			
-			//Set the text of levelText to the string "Day" and append the current level number.
-			levelText.text = "Día " + level;
-			
-			//Set levelImage to active blocking player's view of the game board during setup.
-			levelImage.SetActive(true);
-			
-			//Call the HideLevelImage function with a delay in seconds of levelStartDelay.
-			Invoke("HideLevelImage", levelStartDelay);
-			
-			//Clear any Enemy objects in our List to prepare for next level.
-			enemies.Clear();
-			
-			//Call the SetupScene function of the BoardManager script, pass it current level number.
-			boardScript.SetupScene(level);
-			
-		}
-		
-		
-		//Hides black image used between levels
-		void HideLevelImage()
-		{
-			//Disable the levelImage gameObject.
-			levelImage.SetActive(false);
-			
-			//Set doingSetup to false allowing player to move again.
-			doingSetup = false;
-		}
-		
-		//Update is called every frame.
-		void Update()
-		{
-			//Check that playersTurn or enemiesMoving or doingSetup are not currently true.
-			if(playersTurn || enemiesMoving || doingSetup)
-				
-				//If any of these are true, return and do not start MoveEnemies.
-				return;
-			
-			//Start moving enemies.
-			StartCoroutine (MoveEnemies ());
-		}
-		
-		//Call this to add the passed in Enemy to the List of Enemy objects.
-		public void AddEnemyToList(Enemy script)
-		{
-			//Add Enemy to List enemies.
-			enemies.Add(script);
-		}
-		
-		
-		//GameOver is called when the player reaches 0 food points
-		public void GameOver()
-		{
-			//Set levelText to display number of levels passed and game over message
-			levelText.text = "Después de " + level + " días,\n te moriste de hambre.";
-			
-			//Enable black background image gameObject.
-			levelImage.SetActive(true);
-			
-			//Disable this GameManager.
-			enabled = false;
-		}
-		
-		//Coroutine to move enemies in sequence.
-		IEnumerator MoveEnemies()
-		{
-			//While enemiesMoving is true player is unable to move.
-			enemiesMoving = true;
-			
-			//Wait for turnDelay seconds, defaults to .1 (100 ms).
-			yield return new WaitForSeconds(turnDelay);
-			
-			//If there are no enemies spawned (IE in first level):
-			if (enemies.Count == 0) 
-			{
-				//Wait for turnDelay seconds between moves, replaces delay caused by enemies moving when there are none.
-				yield return new WaitForSeconds(turnDelay);
-			}
-			
-			//Loop through List of Enemy objects.
-			for (int i = 0; i < enemies.Count; i++)
-			{
-				//Call the MoveEnemy function of Enemy at index i in the enemies List.
-				enemies[i].MoveEnemy ();
-				
-				//Wait for Enemy's moveTime before moving next Enemy, 
-				yield return new WaitForSeconds(enemies[i].moveTime);
-			}
-			//Once Enemies are done moving, set playersTurn to true so player can move.
-			playersTurn = true;
-			
-			//Enemies are done moving, set enemiesMoving to false.
-			enemiesMoving = false;
-		}
-	}
-}
 
+        //Inicializa el juego para cada nivel.
+        void InitGame()
+        {
+            //Mientras doingSetup sea verdadero, el jugador no puede moverse, evita que el jugador se mueva mientras la tarjeta de título está arriba.
+            doingSetup = true;
+
+            //Obtiene una referencia a nuestra imagen LevelImage encontrándola por nombre.
+            levelImage = GameObject.Find("LevelImage");
+
+            //Obtiene una referencia al componente de texto de LevelText encontrándolo por nombre y llamando a GetComponent.
+            levelText = GameObject.Find("LevelText").GetComponent<Text>();
+
+            //Establece el texto de levelText a la cadena "Día" y agrega el número del nivel actual.
+            levelText.text = "Día " + level;
+
+            //Activa levelImage para bloquear la vista del jugador del tablero del juego durante la configuración.
+            levelImage.SetActive(true);
+
+            //Llama a la función HideLevelImage con un retraso en segundos de levelStartDelay.
+            Invoke("HideLevelImage", levelStartDelay);
+
+            //Limpia cualquier objeto Enemy en nuestra lista para preparar el próximo nivel.
+            enemies.Clear();
+
+            //Llama a la función SetupScene del script BoardManager, pasa el número del nivel actual.
+            boardScript.SetupScene(level);
+        }
+
+
+        //Oculta la imagen negra utilizada entre niveles
+        void HideLevelImage()
+        {
+            //Desactiva el objeto gameObject levelImage.
+            levelImage.SetActive(false);
+
+            //Establece doingSetup a false, permitiendo que el jugador se mueva nuevamente.
+            doingSetup = false;
+        }
+
+        //Update se llama en cada cuadro.
+        void Update()
+        {
+            //Verifica que playersTurn o enemiesMoving o doingSetup no sean verdaderos actualmente.
+            if (playersTurn || enemiesMoving || doingSetup)
+                //Si alguno de estos es verdadero, regresa y no inicia MoveEnemies.
+                return;
+
+            //Comienza a mover a los enemigos.
+            StartCoroutine(MoveEnemies());
+        }
+
+        //Llama a esto para agregar el Enemy pasado a la lista de objetos Enemy.
+        public void AddEnemyToList(Enemy script)
+        {
+            //Agrega Enemy a la lista enemies.
+            enemies.Add(script);
+        }
+
+
+        //GameOver se llama cuando el jugador llega a 0 puntos de comida
+        public void GameOver()
+        {
+            //Establece levelText para mostrar el número de niveles pasados y el mensaje de fin de juego
+            levelText.text = "Después de " + level + " días,\n te moriste de hambre.";
+
+            //Activa el objeto gameObject de fondo negro levelImage.
+            levelImage.SetActive(true);
+
+            //Desactiva este GameManager.
+            enabled = false;
+        }
+
+        //Corrutina para mover a los enemigos en secuencia.
+        IEnumerator MoveEnemies()
+        {
+            //Mientras enemiesMoving sea verdadero, el jugador no puede moverse.
+            enemiesMoving = true;
+
+            //Espera durante turnDelay segundos, por defecto .1 (100 ms).
+            yield return new WaitForSeconds(turnDelay);
+
+            //Si no hay enemigos generados (es decir, en el primer nivel):
+            if (enemies.Count == 0)
+            {
+                //Espera durante turnDelay segundos entre movimientos, reemplaza el retraso causado por el movimiento de los enemigos cuando no hay ninguno.
+                yield return new WaitForSeconds(turnDelay);
+            }
+
+            //Recorre la lista de objetos Enemy.
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                //Llama a la función MoveEnemy de Enemy en el índice i en la lista enemies.
+                enemies[i].MoveEnemy();
+
+                //Espera durante moveTime de Enemy antes de mover al siguiente Enemy.
+                yield return new WaitForSeconds(enemies[i].moveTime);
+            }
+
+            //Una vez que los enemigos han terminado de moverse, establece playersTurn a true para que el jugador pueda moverse.
+            playersTurn = true;
+
+            //Los enemigos han terminado de moverse, establece enemiesMoving a false.
+            enemiesMoving = false;
+        }
+    }
+}
