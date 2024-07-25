@@ -38,7 +38,7 @@ namespace Completed
 			food = GameManager.instance.playerFoodPoints;
 			
 			//Set the foodText to reflect the current player food total.
-			foodText.text = "Food: " + food;
+			foodText.text = "Comida: " + food;
 			
 			//Call the Start function of the MovingObject base class.
 			base.Start ();
@@ -134,7 +134,7 @@ namespace Completed
 			food--;
 			
 			//Update food text display to reflect current score.
-			foodText.text = "Food: " + food;
+			foodText.text = "Comida: " + food;
 			
 			//Call the AttemptMove method of the base class, passing in the component T (in this case Wall) and x and y direction to move.
 			base.AttemptMove <T> (xDir, yDir);
@@ -192,7 +192,7 @@ namespace Completed
 				food += pointsPerFood;
 				
 				//Update foodText to represent current total and notify player that they gained points
-				foodText.text = "+" + pointsPerFood + " Food: " + food;
+				foodText.text = "+" + pointsPerFood + " Comida: " + food;
 				
 				//Call the RandomizeSfx function of SoundManager and pass in two eating sounds to choose between to play the eating sound effect.
 				SoundManager.instance.RandomizeSfx (eatSound1, eatSound2);
@@ -208,7 +208,7 @@ namespace Completed
 				food += pointsPerSoda;
 				
 				//Update foodText to represent current total and notify player that they gained points
-				foodText.text = "+" + pointsPerSoda + " Food: " + food;
+				foodText.text = "+" + pointsPerSoda + " Comida: " + food;
 				
 				//Call the RandomizeSfx function of SoundManager and pass in two drinking sounds to choose between to play the drinking sound effect.
 				SoundManager.instance.RandomizeSfx (drinkSound1, drinkSound2);
@@ -239,7 +239,7 @@ namespace Completed
 			food -= loss;
 			
 			//Update the food display with the new total.
-			foodText.text = "-"+ loss + " Food: " + food;
+			foodText.text = "-"+ loss + " Comida: " + food;
 			
 			//Check to see if game has ended.
 			CheckIfGameOver ();
