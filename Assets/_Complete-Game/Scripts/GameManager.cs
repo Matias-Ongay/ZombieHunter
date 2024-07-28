@@ -95,7 +95,6 @@ namespace Completed
             boardScript.SetupScene(level);
         }
 
-
         //Oculta la imagen negra utilizada entre niveles
         void HideLevelImage()
         {
@@ -124,7 +123,6 @@ namespace Completed
             //Agrega Enemy a la lista enemies.
             enemies.Add(script);
         }
-
 
         //GameOver se llama cuando el jugador llega a 0 puntos de comida
         public void GameOver()
